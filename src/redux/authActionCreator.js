@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as actionTypes from './actionTypes';
+import jwt_decode from "jwt-decode"
 
 export const authSuccess = (token, userId) => {
     return {
@@ -31,28 +32,30 @@ export const auth = (email, password, mode) => dispatch => {
         password: password,
         returnSecureToken: true,
     }
+    let url = "http://localhost:3001"
     let authUrl = "";
     if (mode === "Sign Up") {
-        authUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=";
+        authUrl = `${url}/user`;
     }
     else {
-        authUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=";
+        authUrl = `${url}/user/login`;
     }
     const API_KEY = "AIzaSyCKO8P9zd-xNuiNKG94pHOfSSilGBJ2udg"
     axios.post(authUrl + API_KEY, authData)
         .then(response => {
             //console.log(response.data);
             dispatch(authLoading(false));
-            localStorage.setItem('token', response.data.idToken);
-            localStorage.setItem('userId', response.data.localId);
-            const expirationTime = new Date(new Date().getTime() + response.data.expiresIn * 1000);
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('userId', response.data.user._id);
+            let decoded = jwt_decode(response.data.token)
+            const expirationTime = new Date(decoded.exp * 1000);
             localStorage.setItem('expirationTime', expirationTime)
-            dispatch(authSuccess(response.data.idToken, response.data.localId))
+            dispatch(authSuccess(response.data.token, response.data.user._id))
         })
         .catch(err => {
             dispatch(authLoading(false));
             //console.log(err.response.data.error.message)
-            dispatch(authFailed(err.response.data.error.message))
+            dispatch(authFailed(err.response.data))
         })
 }
 
