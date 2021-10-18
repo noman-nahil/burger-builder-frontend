@@ -30,7 +30,7 @@ export const auth = (email, password, mode) => dispatch => {
     const authData = {
         email: email,
         password: password,
-        returnSecureToken: true,
+        //returnSecureToken: true,
     }
     let url = "http://localhost:3001"
     let authUrl = "";
@@ -40,8 +40,8 @@ export const auth = (email, password, mode) => dispatch => {
     else {
         authUrl = `${url}/user/login`;
     }
-    const API_KEY = "AIzaSyCKO8P9zd-xNuiNKG94pHOfSSilGBJ2udg"
-    axios.post(authUrl + API_KEY, authData)
+    //const API_KEY = "AIzaSyCKO8P9zd-xNuiNKG94pHOfSSilGBJ2udg"
+    axios.post(authUrl, authData)
         .then(response => {
             //console.log(response.data);
             dispatch(authLoading(false));
