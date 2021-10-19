@@ -16,7 +16,7 @@ const mapStateToProps = state => {
         token: state.token
     }
 }
-const mapDispactToProps = dispatch => {
+const mapDispatchToProps = dispatch => {
     return {
         resetIngredients: () => dispatch(resetIngredients()),
     }
@@ -24,122 +24,99 @@ const mapDispactToProps = dispatch => {
 
 class Checkout extends Component {
     state = {
+        values: {
+            deliveryAddress: "",
+            phone: "",
+            paymentType: "Cash On Delivery",
+        },
         isLoading: false,
         isModalOpen: false,
-        modalMsg: ""
+        modalMsg: "",
     }
+
     goBack = () => {
         this.props.history.goBack("/");
     }
 
-    render() {
-        let form = (<div>
-            <Formik initialValues={
-                {
-                    deliveryAddress: "",
-                    phone: "",
-                    paymentType: "Cash On Delivery"
+    inputChangerHandler = (e) => {
+        this.setState({
+            values: {
+                ...this.state.values,
+                [e.target.name]: e.target.value,
+            }
+        })
+    }
+
+    submitHandler = () => {
+        this.setState({ isLoading: true });
+        const order = {
+            ingredients: this.props.ingredients,
+            customer: this.state.values,
+            price: this.props.totalPrice,
+            userId: this.props.userId,
+        }
+        let url = process.env.REACT_APP_URL;
+        axios.post(
+            `${url}/order`,
+            order,
+            {
+                headers: {
+                    "Authorization": `Bearer ${this.props.token}`
                 }
             }
-                onSubmit={
-                    (values) => {
-                        //console.log("Values", values)
-                        this.setState({
-                            isLoading: true
-                        })
-                        const order = {
-                            ingredients: this.props.ingredients,
-                            customerInfo: values,
-                            price: this.props.totalPrice,
-                            orderTime: new Date(),
-                            userId: this.props.userId
-                        }
-                        axios.post("https://burger-builder-e5858-default-rtdb.asia-southeast1.firebasedatabase.app/orders.json?auth=" + this.props.token, order)
-                            .then(response => {
-                                if (response.status === 200) {
-                                    this.setState({
-                                        isLoading: false,
-                                        isModalOpen: true,
-                                        modalMsg: "Order Placed Successfully",
-                                    })
-                                    this.props.resetIngredients();
-                                }
-                                else {
-                                    this.setState({
-                                        isLoading: false,
-                                        isModalOpen: true,
-                                        modalMsg: "Something Went wrong! Try Again!"
-                                    })
-                                }
-                            })
-                            .catch(err => {
-                                this.setState({
-                                    isLoading: false,
-                                    isModalOpen: true,
-                                    modalMsg: "Something Went wrong! Try Again!"
-                                })
-                            });
-                        console.log(order);
-                    }
+        )
+            .then(response => {
+                if (response.status === 201) {
+                    this.setState({
+                        isLoading: false,
+                        isModalOpen: true,
+                        modalMsg: "Order Placed Successfully!",
+                    })
+                    console.log(order)
+                    this.props.resetIngredients();
+                } else {
+                    this.setState({
+                        isLoading: false,
+                        isModalOpen: true,
+                        modalMsg: "Something Went Wrong! Order Again!",
+                    })
                 }
-                validate={(values) => {
-                    const errors = {};
-                    if (!values.deliveryAddress) {
-                        errors.deliveryAddress = "Required"
-                    }
+            })
+            .catch(err => {
+                this.setState({
+                    isLoading: false,
+                    isModalOpen: true,
+                    modalMsg: "Something Went Wrong! Order Again!",
+                })
+            })
+    }
 
-                    if (!values.phone) {
-                        errors.phone = "Required"
-                    }
-                    else if (values.phone.length < 10) {
-                        errors.phone = "Phone number Must be 11 Digits"
-                    }
-
-                    return errors;
-                }}
-
-
-
-
-            >{({ values, handleChange, handleSubmit, errors }) => (
-                <div>
-                    <h4 style={{ border: "1px solid grey", boxShadow: "1px 1px #888888", borderRadius: "5px", padding: "20px" }}>Payment: {this.props.totalPrice} BDT</h4>
-                    <form style={{ border: "1px solid grey", boxShadow: "1px 1px #888888", borderRadius: "5px", padding: "20px" }} onSubmit={handleSubmit}>
-                        <input
-                            name="deliveryAddress"
-                            className="form-control"
-                            placeholder="Your Delivery Address"
-                            value={values.deliveryAddress}
-                            onChange={handleChange}
-                        />
-                        <span className="text-danger">{errors.deliveryAddress}</span>
-                        <br />
-                        <input
-                            name="phone"
-                            className="form-control"
-                            placeholder="Your Phone Number"
-                            value={values.phone}
-                            onChange={handleChange}
-                        />
-                        <span className="text-danger">{errors.phone}</span>
-                        <br />
-                        <select
-                            name="paymentType"
-                            className="form-control"
-                            value={values.paymentType}
-                            onChange={handleChange}
-                        >
-                            <option value="Cash On Delivery">Cash On Delivery</option>
-                            <option value="Bkash">Bkash</option>
-                        </select>
-                        <Button className="mr-auto mt-1" style={{ backgroundColor: "#D70F64" }} disabled={!this.props.purchaseAble} type="submit">Place Order</Button>
-                        <Button className="ml-1 mt-1" color="secondary" onClick={this.goBack}>Cancel</Button>
-                    </form>
-                </div>
-            )}
-
-            </Formik>
-
+    render() {
+        let form = (<div>
+            <h4 style={{
+                border: "1px solid grey",
+                boxShadow: "1px 1px #888888",
+                borderRadius: "5px",
+                padding: "20px",
+            }}>Payment: {this.props.totalPrice} BDT</h4>
+            <form style={{
+                border: "1px solid grey",
+                boxShadow: "1px 1px #888888",
+                borderRadius: "5px",
+                padding: "20px",
+            }}>
+                <textarea name="deliveryAddress" value={this.state.values.deliveryAddress} className="form-control" placeholder="Your Address" onChange={(e) => this.inputChangerHandler(e)}></textarea>
+                <br />
+                <input name="phone" className="form-control" value={this.state.values.phone} placeholder="Your Phone Number" onChange={(e) => this.inputChangerHandler(e)} />
+                <br />
+                <select name="paymentType" className="form-control" value={this.state.values.paymentType} onChange={(e) => this.inputChangerHandler(e)}>
+                    <option value="Cash On Delivery">Cash On Delivery</option>
+                    <option value="Bkash">Bkash</option>
+                </select>
+                <br />
+                <Button style={{ backgroundColor: "#D70F64" }} className="mr-auto" onClick={this.submitHandler} disabled={!this.props.purchaseAble}>Place Order</Button>
+                <Button color="secondary" className="ml-1" onClick={this.goBack}>Cancel</Button>
+            </form>
         </div>)
         return (
             <div>
@@ -149,9 +126,9 @@ class Checkout extends Component {
                         <p>{this.state.modalMsg}</p>
                     </ModalBody>
                 </Modal>
-            </div >
+            </div>
         )
     }
 }
 
-export default connect(mapStateToProps, mapDispactToProps)(Checkout);
+export default connect(mapStateToProps, mapDispatchToProps)(Checkout);

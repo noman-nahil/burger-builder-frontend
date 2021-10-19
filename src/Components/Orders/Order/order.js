@@ -7,10 +7,12 @@ const order = props => {
                 x <span style={{ textTransform: "capitalize" }}>{item.type}</span></span>
         )
     })
+
+    console.log('Address:', props.order.customer)
     return (
         <div style={{ border: "1px solid grey", boxShadow: "1px 1px #888888", borderRadius: "5px", padding: "20px", margin: "10px" }} className="">
-            <p>Order Number: {props.order.id}</p>
-            <p>Delivery Address: {props.order.customerInfo.deliveryAddress}</p>
+            <p>Order Number: {props.order._id}</p>
+            <p>Delivery Address:  {props.order.customer.deliveryAddress}</p>
             <hr />
             {ingredientSummary}
             <hr />
@@ -19,4 +21,4 @@ const order = props => {
     )
 }
 
-export default order
+export default order;
